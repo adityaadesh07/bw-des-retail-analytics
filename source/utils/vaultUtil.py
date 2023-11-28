@@ -1,50 +1,61 @@
 import requests
 
 vault_url = "http://127.0.0.1:8200"
-role_id = "4665b9ec-6d2c-41be-e5dc-2ce62d10c934"
-secret_id = "1ae817be-b471-d46c-e4a7-d93faf94a67f"
+role_id = "6d0a8404-231f-380a-b175-0e6ecacd6c89"
+secret_id = "7a232f6f-d00e-564b-546b-5f7d9723dc0e"
 secret_path = "secret/data/aws"
 
-def authenticate_with_approle():
-    auth_url = f"{vault_url}/v1/auth/approle/login"
-    auth_data = {
-        "role_id": role_id,
-        "secret_id": secret_id
-    }
-    try:
-        auth_response = requests.post(auth_url, json=auth_data)
-        auth_response.raise_for_status()
+class getVaultCred:
 
-        token = auth_response.json()["auth"]["client_token"]
-        print()
-        print("Token===========",)
-        return token
-    
-    except requests.exceptions.RequestException as e:
-        print(f"Authentication error : {e}")
-        return None
+    def __init__(self, vault_url, role_id, secret_id, secret_path):
+        self.vault_url = vault_url
+        self.role_id = role_id
+        self.secret_id = secret_id
+        self.secret_path = secret_path
+        self.token = None
 
-def get_secret(token):
-    
-    headers = {
-        "X-Vault-Token": token,
-    }
-    url = f"{vault_url}/v1/{secret_path}"
+    def authenticate_with_approle(self):
+        auth_url = f"{self.vault_url}/v1/auth/approle/login"
+        auth_data = {
+            "role_id": self.role_id,
+            "secret_id": self.secret_id
+        }
+        try:
+            auth_response = requests.post(auth_url, json=auth_data)
+            auth_response.raise_for_status()
 
-    try:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
+            self.token = auth_response.json()["auth"]["client_token"]
+            return self.token
+        
+        except requests.exceptions.RequestException as e:
+            print(f"Authentication error: {e}")
+            return None
 
-        secret_data = response.json()["data"]
+    def get_secret(self,token):
+        headers = {
+            "X-Vault-Token": token,
+        }
+        url = f"{self.vault_url}/v1/{self.secret_path}"
 
-        return secret_data
+        try:
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()
 
-    except requests.exceptions.RequestException as e:
-        print(f"Error retrieving secret: {e}")  
-        return None  
+            secret_data = response.json()["data"]
 
+            return secret_data
 
-token = authenticate_with_approle()
-secret_data = get_secret(token)
+        except requests.exceptions.RequestException as e:
+            print(f"Error retrieving secret: {e}")  
+            return None  
 
-print(secret_data)
+# Create an instance of the getVaultCred class
+vault_cred = getVaultCred(vault_url, role_id, secret_id, secret_path)
+
+# Authenticate with AppRole and get token
+token = vault_cred.authenticate_with_approle()
+
+if token:
+    # Retrieve the secret using the obtained token
+    secret_data = vault_cred.get_secret(token)
+    print(secret_data)
