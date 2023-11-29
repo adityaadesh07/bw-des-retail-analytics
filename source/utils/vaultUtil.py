@@ -1,9 +1,9 @@
 import requests
 
 vault_url = "http://127.0.0.1:8200"
-role_id = "4665b9ec-6d2c-41be-e5dc-2ce62d10c934"
-secret_id = "1ae817be-b471-d46c-e4a7-d93faf94a67f"
-secret_path = "secret/data/snow"
+role_id = "df059e9c-4179-d6c2-a4a8-34e913a66751"
+secret_id = "1a0e129f-52a9-9a1f-5a07-94bfa54db4f3"
+secret_path = "secret/data/aws"
 
 class getVaultCred:
 
@@ -31,7 +31,7 @@ class getVaultCred:
             print(f"Authentication error: {e}")
             return None
 
-    def get_secret(self,token):
+    def get_secret(self, token):
         headers = {
             "X-Vault-Token": token,
         }
@@ -55,4 +55,7 @@ vault_cred = getVaultCred(vault_url, role_id, secret_id, secret_path)
 # Authenticate with AppRole and get token
 token = vault_cred.authenticate_with_approle()
 
-print(secret_data)
+if token:
+    # Retrieve the secret using the obtained token
+    secret_data = vault_cred.get_secret(token)
+    print(secret_data)
